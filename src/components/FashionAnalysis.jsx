@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 function FashionAnalysis({ image, analysis, setAnalysis, loading, setLoading }) {
   useEffect(() => {
@@ -24,10 +24,9 @@ function FashionAnalysis({ image, analysis, setAnalysis, loading, setLoading }) 
         }
 
         const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const ai = new GoogleGenAI({ apiKey });
 
-        const prompt = [
+        const promptText = [
           "Analyze this outfit and provide:",
           "1. A detailed description of the clothing items",
           "2. Style assessment (1-10 rating)",
@@ -39,22 +38,20 @@ function FashionAnalysis({ image, analysis, setAnalysis, loading, setLoading }) 
 
         console.log('Sending request to Gemini API...');
 
-        const result = await model.generateContent({
-          contents: [{
-            parts: [
-              { text: prompt },
-              {
-                inlineData: {
-                  mimeType: mimeType,
-                  data: base64Data
-                }
+        const response = await ai.models.generateContent({
+          model: 'gemini-3-flash-preview',
+          contents: [
+            promptText,
+            {
+              inlineData: {
+                data: base64Data,
+                mimeType
               }
-            ]
-          }]
+            }
+          ]
         });
 
-        const response = await result.response;
-        const text = response.text();
+        const text = response.text;
         
         if (!text || text.trim().length === 0) {
           throw new Error('No analysis generated: The AI model returned empty response');
